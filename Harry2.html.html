@@ -1,0 +1,499 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>魁地奇金探子遊戲</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(to bottom right, #312e81, #581c87, #831843);
+            font-family: 'Arial', sans-serif;
+            padding: 10px;
+            overflow: hidden;
+        }
+
+        .container {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 20px;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+            max-width: 100%;
+            width: 100%;
+        }
+
+        .header {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            margin-bottom: 16px;
+        }
+
+        .header h1 {
+            font-size: clamp(20px, 5vw, 32px);
+            font-weight: bold;
+            color: white;
+        }
+
+        .header span {
+            font-size: clamp(20px, 5vw, 32px);
+        }
+
+        .score-board {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 12px;
+        }
+
+        .score-box {
+            flex: 1;
+            padding: 10px 16px;
+            border-radius: 12px;
+            text-align: center;
+            color: white;
+        }
+
+        .score-box.green {
+            background: #059669;
+        }
+
+        .score-box.red {
+            background: #e11d48;
+        }
+
+        .score-label {
+            font-size: 12px;
+            opacity: 0.8;
+        }
+
+        .score-value {
+            font-size: 20px;
+            font-weight: bold;
+        }
+
+        .game-area {
+            position: relative;
+            width: 100%;
+            max-width: 600px;
+            aspect-ratio: 3/2;
+            background: linear-gradient(to bottom, #67e8f9, #93c5fd, #bfdbfe);
+            border-radius: 16px;
+            border: 4px solid #fbbf24;
+            overflow: hidden;
+            margin: 0 auto;
+        }
+
+        .cloud {
+            position: absolute;
+            background: white;
+            border-radius: 50%;
+            filter: blur(4px);
+        }
+
+        .cloud1 {
+            top: 12%;
+            left: 10%;
+            width: 13%;
+            height: 10%;
+            opacity: 0.7;
+        }
+
+        .cloud2 {
+            top: 32%;
+            right: 16%;
+            width: 18%;
+            height: 12%;
+            opacity: 0.6;
+        }
+
+        .cloud3 {
+            bottom: 24%;
+            left: 21%;
+            width: 16%;
+            height: 10%;
+            opacity: 0.65;
+        }
+
+        .player {
+            position: absolute;
+            font-size: clamp(32px, 8vw, 48px);
+            transform: translate(-50%, -50%);
+            filter: drop-shadow(0 4px 6px rgba(0,0,0,0.3));
+            pointer-events: none;
+        }
+
+        .snitch {
+            position: absolute;
+            transform: translate(-50%, -50%);
+            transition: all 0.7s ease-in-out;
+            pointer-events: none;
+        }
+
+        .snitch-icon {
+            font-size: clamp(28px, 7vw, 40px);
+            animation: pulse 1s infinite;
+        }
+
+        .snitch-glow {
+            position: absolute;
+            inset: 0;
+            background: #fbbf24;
+            border-radius: 50%;
+            filter: blur(8px);
+            opacity: 0.6;
+            animation: ping 1s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
+
+        @keyframes ping {
+            0% { transform: scale(1); opacity: 0.6; }
+            75%, 100% { transform: scale(2); opacity: 0; }
+        }
+
+        .menu-overlay {
+            position: absolute;
+            inset: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(0, 0, 0, 0.3);
+            z-index: 10;
+        }
+
+        .menu-box {
+            background: white;
+            border-radius: 16px;
+            padding: 24px;
+            text-align: center;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+            max-width: 90%;
+        }
+
+        .menu-box h2 {
+            font-size: clamp(22px, 5vw, 30px);
+            font-weight: bold;
+            color: #581c87;
+            margin-bottom: 12px;
+        }
+
+        .menu-box p {
+            color: #374151;
+            margin-bottom: 6px;
+            font-size: clamp(12px, 3vw, 16px);
+        }
+
+        .final-score {
+            font-size: clamp(28px, 7vw, 36px);
+            font-weight: bold;
+            color: #059669;
+            margin-bottom: 20px;
+        }
+
+        .start-btn {
+            background: linear-gradient(to right, #fbbf24, #f97316);
+            color: white;
+            font-weight: bold;
+            font-size: clamp(14px, 4vw, 18px);
+            padding: 12px 28px;
+            border-radius: 9999px;
+            border: none;
+            cursor: pointer;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3);
+            transition: transform 0.2s;
+        }
+
+        .start-btn:active {
+            transform: scale(0.95);
+        }
+
+        .footer-text {
+            margin-top: 12px;
+            text-align: center;
+            color: white;
+            font-size: clamp(11px, 3vw, 14px);
+            opacity: 0.9;
+        }
+
+        .permission-warning {
+            background: #fbbf24;
+            color: #78350f;
+            padding: 8px;
+            border-radius: 8px;
+            margin-bottom: 12px;
+            font-size: 12px;
+            text-align: center;
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <span>🏆</span>
+            <h1>魁地奇金探子</h1>
+        </div>
+
+        <div class="permission-warning" id="permissionWarning">
+            請允許使用動作感應器來搖動手機控制!
+        </div>
+
+        <div class="score-board">
+            <div class="score-box green">
+                <div class="score-label">得分</div>
+                <div class="score-value" id="score">0</div>
+            </div>
+            <div class="score-box red">
+                <div class="score-label">剩餘時間</div>
+                <div class="score-value" id="time">60秒</div>
+            </div>
+        </div>
+
+        <div class="game-area" id="gameArea">
+            <div class="cloud cloud1"></div>
+            <div class="cloud cloud2"></div>
+            <div class="cloud cloud3"></div>
+
+            <div class="player" id="player">🧙‍♂️</div>
+            <div class="snitch" id="snitch">
+                <div class="snitch-glow"></div>
+                <div class="snitch-icon">⚡</div>
+            </div>
+
+            <div class="menu-overlay" id="menuOverlay">
+                <div class="menu-box">
+                    <h2 id="menuTitle">準備好了嗎?</h2>
+                    <div id="menuContent">
+                        <p>📱 傾斜手機來控制搜捕手</p>
+                        <p>⚡ 抓住金探子得 150 分</p>
+                        <p style="margin-bottom: 20px;">⏱️ 在 60 秒內盡可能得高分!</p>
+                    </div>
+                    <button class="start-btn" id="startBtn">開始遊戲 🚀</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="footer-text" id="footerText">傾斜手機來移動! 📱</div>
+    </div>
+
+    <script>
+        let gameStarted = false;
+        let gameOver = false;
+        let score = 0;
+        let timeLeft = 60;
+        let playerPos = { x: 50, y: 50 }; // 使用百分比
+        let snitchPos = { x: 75, y: 37.5 };
+        let snitchInterval, timerInterval;
+        let gyroPermissionGranted = false;
+
+        const player = document.getElementById('player');
+        const snitch = document.getElementById('snitch');
+        const scoreDisplay = document.getElementById('score');
+        const timeDisplay = document.getElementById('time');
+        const menuOverlay = document.getElementById('menuOverlay');
+        const menuTitle = document.getElementById('menuTitle');
+        const menuContent = document.getElementById('menuContent');
+        const startBtn = document.getElementById('startBtn');
+        const footerText = document.getElementById('footerText');
+        const gameArea = document.getElementById('gameArea');
+        const permissionWarning = document.getElementById('permissionWarning');
+
+        async function requestMotionPermission() {
+            if (typeof DeviceMotionEvent !== 'undefined' && typeof DeviceMotionEvent.requestPermission === 'function') {
+                try {
+                    const permission = await DeviceMotionEvent.requestPermission();
+                    gyroPermissionGranted = permission === 'granted';
+                    if (!gyroPermissionGranted) {
+                        permissionWarning.style.display = 'block';
+                    }
+                    return gyroPermissionGranted;
+                } catch (error) {
+                    console.error('Error requesting motion permission:', error);
+                    return false;
+                }
+            }
+            gyroPermissionGranted = true;
+            return true;
+        }
+
+        async function startGame() {
+            const hasPermission = await requestMotionPermission();
+            
+            if (!hasPermission && typeof DeviceMotionEvent.requestPermission === 'function') {
+                alert('需要動作感應器權限才能玩遊戲!');
+                return;
+            }
+
+            gameStarted = true;
+            gameOver = false;
+            score = 0;
+            timeLeft = 60;
+            playerPos = { x: 50, y: 50 };
+            snitchPos = { x: 75, y: 37.5 };
+
+            scoreDisplay.textContent = score;
+            timeDisplay.textContent = timeLeft + '秒';
+            footerText.textContent = '傾斜手機來移動! 📱';
+            menuOverlay.style.display = 'none';
+            permissionWarning.style.display = 'none';
+
+            updatePlayerPosition();
+            updateSnitchPosition();
+
+            snitchInterval = setInterval(moveSnitch, 1500);
+            timerInterval = setInterval(updateTimer, 1000);
+        }
+
+        function moveSnitch() {
+            snitchPos.x = Math.random() * 90 + 5;
+            snitchPos.y = Math.random() * 90 + 5;
+            updateSnitchPosition();
+        }
+
+        function updateTimer() {
+            timeLeft--;
+            timeDisplay.textContent = timeLeft + '秒';
+
+            if (timeLeft <= 0) {
+                endGame();
+            }
+        }
+
+        function endGame() {
+            gameStarted = false;
+            gameOver = true;
+            clearInterval(snitchInterval);
+            clearInterval(timerInterval);
+
+            menuTitle.textContent = '遊戲結束!';
+            menuContent.innerHTML = `
+                <p>你的得分</p>
+                <p class="final-score">${score}</p>
+            `;
+            startBtn.textContent = '再玩一次 🎮';
+            menuOverlay.style.display = 'flex';
+            footerText.textContent = '做得好! 🎉';
+        }
+
+        function updatePlayerPosition() {
+            player.style.left = playerPos.x + '%';
+            player.style.top = playerPos.y + '%';
+            checkCollision();
+        }
+
+        function updateSnitchPosition() {
+            snitch.style.left = snitchPos.x + '%';
+            snitch.style.top = snitchPos.y + '%';
+        }
+
+        function checkCollision() {
+            const dx = playerPos.x - snitchPos.x;
+            const dy = playerPos.y - snitchPos.y;
+            const distance = Math.sqrt(dx * dx + dy * dy);
+
+            if (distance < 10) {
+                score += 150;
+                scoreDisplay.textContent = score;
+                moveSnitch();
+            }
+        }
+
+        // 陀螺儀控制
+        window.addEventListener('deviceorientation', (e) => {
+            if (!gameStarted || gameOver) return;
+
+            const gamma = e.gamma; // 左右傾斜 (-90 到 90)
+            const beta = e.beta;   // 前後傾斜 (-180 到 180)
+
+            if (gamma !== null && beta !== null) {
+                // 根據傾斜角度移動
+                const speed = 1.5;
+                
+                // 左右移動 (gamma)
+                if (Math.abs(gamma) > 5) {
+                    playerPos.x += (gamma / 45) * speed;
+                    playerPos.x = Math.max(5, Math.min(95, playerPos.x));
+                }
+
+                // 上下移動 (beta)
+                const adjustedBeta = beta > 90 ? beta - 180 : beta;
+                if (Math.abs(adjustedBeta) > 5) {
+                    playerPos.y += (adjustedBeta / 45) * speed;
+                    playerPos.y = Math.max(5, Math.min(95, playerPos.y));
+                }
+
+                updatePlayerPosition();
+            }
+        });
+
+        // 備用: 觸控控制 (以防陀螺儀不可用)
+        gameArea.addEventListener('touchstart', (e) => {
+            if (!gameStarted || gameOver) return;
+            e.preventDefault();
+            
+            const touch = e.touches[0];
+            const rect = gameArea.getBoundingClientRect();
+            
+            playerPos.x = ((touch.clientX - rect.left) / rect.width) * 100;
+            playerPos.y = ((touch.clientY - rect.top) / rect.height) * 100;
+            
+            playerPos.x = Math.max(5, Math.min(95, playerPos.x));
+            playerPos.y = Math.max(5, Math.min(95, playerPos.y));
+            
+            updatePlayerPosition();
+        });
+
+        gameArea.addEventListener('touchmove', (e) => {
+            if (!gameStarted || gameOver) return;
+            e.preventDefault();
+            
+            const touch = e.touches[0];
+            const rect = gameArea.getBoundingClientRect();
+            
+            playerPos.x = ((touch.clientX - rect.left) / rect.width) * 100;
+            playerPos.y = ((touch.clientY - rect.top) / rect.height) * 100;
+            
+            playerPos.x = Math.max(5, Math.min(95, playerPos.x));
+            playerPos.y = Math.max(5, Math.min(95, playerPos.y));
+            
+            updatePlayerPosition();
+        });
+
+        // 鍵盤控制 (電腦測試用)
+        window.addEventListener('keydown', (e) => {
+            if (!gameStarted || gameOver) return;
+
+            const speed = 3;
+
+            if (e.key === 'ArrowLeft') {
+                playerPos.x = Math.max(5, playerPos.x - speed);
+            } else if (e.key === 'ArrowRight') {
+                playerPos.x = Math.min(95, playerPos.x + speed);
+            } else if (e.key === 'ArrowUp') {
+                playerPos.y = Math.max(5, playerPos.y - speed);
+            } else if (e.key === 'ArrowDown') {
+                playerPos.y = Math.min(95, playerPos.y + speed);
+            }
+
+            updatePlayerPosition();
+        });
+
+        startBtn.addEventListener('click', startGame);
+    </script>
+</body>
+</html>
